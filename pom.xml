@@ -21,7 +21,7 @@
 
     <groupId>com.tyro.oss</groupId>
     <artifactId>rabbit-amazon-bridge</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -209,6 +209,10 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-aws-core</artifactId>
             <version>${spring-cloud.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
         </dependency>
         <dependency>
             <groupId>com.bazaarvoice.jolt</groupId>

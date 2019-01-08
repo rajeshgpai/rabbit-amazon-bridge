@@ -1,4 +1,6 @@
 # Rabbit Amazon Bridge
+[![Download](https://maven-badges.herokuapp.com/maven-central/com.tyro.oss/rabbit-amazon-bridge/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.tyro.oss/rabbit-amazon-bridge)
+[![Build Status](https://travis-ci.org/tyro/rabbit-amazon-bridge.svg?branch=master)](https://travis-ci.org/tyro/rabbit-amazon-bridge)
 
 The rabbit-amazon-bridge is a service that helps us route rabbit messages from on-premise applications to and from services running in Amazon.
 
@@ -20,8 +22,8 @@ spring.rabbitmq.port=5672
 spring.rabbitmq.username=<your rabbit mq user>
 spring.rabbitmq.password=<your rabbit mq password>
 spring.rabbitmq.virtual-host=/
-aws.credentials.secretKey=<your aws secret key>
-aws.credentials.accessKey=<your aws access key>
+cloud.aws.credentials.accessKey=<your aws secret key>
+cloud.aws.credentials.secretKey=<your aws access key>
 cloud.aws.region.static=us-east-1
 bridge.config.location=classpath:bridge-config.json,file:/opt/rabbit-bridge/some-other-config.json
 
@@ -37,79 +39,65 @@ We mostly for shifting (which we use to strip out sensitive fields) and/or field
 ```json
 [
   {
-    from : {
-      rabbit: {
-        exchange: exchange-name-1,
-        queueName: queue-name-1,
-        routingKey: routing-key-1,
-        transformationSpecs: [{
-          operation: shift,
-          spec: {
-            fieldA: fieldA,
-            fieldB: fieldB
-          }
-        }]
+    "from" : {
+      "rabbit": {
+        "exchange": "exchange-name-1",
+        "queueName": "queue-name-1",
+        "routingKey": "routing-key-1"
       }
     },
-    to : {
-      sns: {
-        name:rabbit-bridge-test-topic
+    "transformationSpecs": [{
+      "operation": "shift",
+      "spec": {
+        "fieldA": "fieldA",
+        "fieldB": "fieldB"
+      }
+    }],
+    "to" : {
+      "sns": {
+        "name":"rabbit-bridge-test-topic"
       }
     }
   },
   {
-    from : {
-      rabbit: {
-        exchange: exchange-name-2,
-        queueName: queue-name-2,
-        routingKey: routing-key-2,
-        transformationSpecs: [{
-          operation: shift,
-          spec: {
-            fieldC: fieldC,
-            fieldB: {
-              bid : bid
-            }
-          }
-        }]
+    "from" : {
+      "rabbit": {
+        "exchange": "exchange-name-2",
+        "queueName": "queue-name-2",
+        "routingKey": "routing-key-2"
       }
     },
-    to : {
-      sqs: {
-        name:rabbit-bridge-test-queue
+    "transformationSpecs": [{
+      "operation": "shift",
+      "spec": {
+        "fieldA": "fieldA",
+        "fieldB": "fieldB"
+      }
+    }],
+    "to" : {
+      "sqs": {
+        "name":"rabbit-bridge-test-queue"
       }
     }
   },
   {
-    from : {
-      sqs: {
-        name:rabbit-bridge-incoming-test-queue
+    "from" : {
+      "sqs": {
+        "name":"rabbit-bridge-incoming-test-queue"
       }
     },
-    to : {
-      rabbit: {
-        exchange: exchange-name-3,
-        routingKey: routing-key-3
+    "to" : {
+      "rabbit": {
+        "exchange": "exchange-name-3",
+        "routingKey": "routing-key-3"
       }
     }
   }
 ]
 ```
 
-
-
-
-
 ### Customised properties
 We've added a few custom properties
-
-#### Change your SQS endpoint url
-This is used for working with elasticmq for local testing.  
-
-```properties  
-aws.sqs.endpoint.url=http://localhost:9324
-aws.sqs.aws.region=localhost
-```
 
 #### Proxied comms to AWS
 This may be useful for organisations who want all traffic between their on-premise artefacts and amazon to go through a proxy.
@@ -119,6 +107,26 @@ aws.proxy.host=<proxy-host>
 aws.proxy.port=<proxy-port>
 ```
 
+This is disabled by default
+
+#### Default message id key for incoming messages
+When messages come in from AWS on SQS or SNS they contain a 'messageId' that may be useful to some as a correlation id. 
+This messageId can be added to the messages prior to publishing the to payload to rabbit. 
+The format of this field is <queue-name>/messageId
+
+```properties
+default.incoming.message.id.key=globalMessageId
+```
+
+**Default**: null
+
+#### Change your SQS endpoint url
+This is used for working with elasticmq for local testing.  
+
+```properties  
+aws.sqs.endpoint.url=http://localhost:9324
+aws.sqs.aws.region=localhost
+```
 
 ### Additional useful Spring Properties
 Rabbit amazon bridge is based on spring boot so you can use almost any property it supports using it's relaxed binding.
@@ -157,14 +165,13 @@ We will cheekily suggest applying common sense. We don't use hibernate in this p
 
 Run 
 ```bash
-mvn clean install
+./mvnw clean install
 ```
 
 ### Dependencies
 
 * Docker
 * Java 8 or higher 
-* Maven
 
 ## Docker builds
 

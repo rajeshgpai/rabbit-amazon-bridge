@@ -16,12 +16,14 @@
 
 package com.tyro.oss.rabbit_amazon_bridge.forwarder
 
+import com.amazonaws.SdkBaseException
 import com.tyro.oss.rabbit_amazon_bridge.messagetransformer.MessageTransformer
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.AmqpRejectAndDontRequeueException
 import org.springframework.amqp.core.MessageListener
 import org.springframework.cloud.aws.messaging.core.NotificationMessagingTemplate
 import org.springframework.cloud.aws.messaging.core.QueueMessagingTemplate
+import org.springframework.messaging.MessagingException
 
 abstract class MessageTransformingMessageListener(val messageTransformer: MessageTransformer) : MessageListener {
 
@@ -52,7 +54,7 @@ class SqsForwardingMessageListener(
     }
 }
 
-class DeadletteringMessageListener(val messageListener: MessageListener) : MessageListener {
+class DeadletteringMessageListener(val messageListener: MessageListener, val shouldRetry: Boolean = false) : MessageListener {
 
     private val LOG = LoggerFactory.getLogger(DeadletteringMessageListener::class.java)
 
@@ -61,7 +63,13 @@ class DeadletteringMessageListener(val messageListener: MessageListener) : Messa
             LOG.info("Message received on ${rabbitMessage.messageProperties.receivedExchange} / ${rabbitMessage.messageProperties.consumerQueue}")
             messageListener.onMessage(rabbitMessage)
         } catch (exception: Exception) {
-            throw AmqpRejectAndDontRequeueException(exception)
+            when {
+                shouldRetry && (exception is SdkBaseException || exception is MessagingException) -> {
+                    LOG.warn("A retryable error occurred.", exception)
+                    throw exception
+                }
+                else -> throw AmqpRejectAndDontRequeueException(exception)
+            }
         }
     }
 }
